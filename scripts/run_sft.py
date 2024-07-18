@@ -25,6 +25,7 @@ import datasets
 import torch
 import transformers
 from transformers import AutoModelForCausalLM, set_seed
+from MoD import AutoMoDModelForCausalLM
 
 from alignment import (
     DataArguments,
@@ -126,6 +127,9 @@ def main():
         model = AutoModelForCausalLM.from_pretrained(model_args.model_name_or_path, **model_kwargs)
         model, tokenizer = setup_chat_format(model, tokenizer)
         model_kwargs = None
+    elif "mod" in model:
+        model = AutoMoDModelForCausalLM.from_pretrained(model_args.model_name_or_path, **model_kwargs)
+        model_kwargs = None
 
     #####################
     # Apply chat template
@@ -162,6 +166,12 @@ def main():
     ########################
     # Initialize the Trainer
     ########################
+    # TODO: need to refactor it
+    training_args.dataset_num_proc = 8
+    training_args.dataset_batch_size = 1000
+    training_args.num_of_sequences = 1024
+    training_args.chars_per_token = 3.6
+    training_args.eval_packing = None
     trainer = SFTTrainer(
         model=model,
         model_init_kwargs=model_kwargs,

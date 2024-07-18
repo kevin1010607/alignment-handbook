@@ -20,6 +20,7 @@ import sys
 import torch
 import transformers
 from transformers import AutoModelForCausalLM, set_seed
+from MoD import AutoMoDModelForCausalLM
 
 from alignment import (
     DataArguments,
@@ -176,6 +177,9 @@ def main():
             revision=model_args.model_revision,
         )
         model_kwargs = None
+    elif "mod" in model:
+        model = AutoMoDModelForCausalLM.from_pretrained(model_args.model_name_or_path, **model_kwargs)
+        model_kwargs = None
 
     ref_model = model
     ref_model_kwargs = model_kwargs
@@ -187,6 +191,22 @@ def main():
     #########################
     # Instantiate DPO trainer
     #########################
+    # TODO: need to refactor it
+    training_args.model_init_kwargs = None
+    training_args.ref_model_init_kwargs = None
+    training_args.generate_during_eval = False
+    training_args.model_adapter_name = None
+    training_args.ref_adapter_name = None
+    training_args.reference_free = False
+    training_args.max_target_length = None
+    training_args.label_pad_token_id = -100
+    training_args.disable_dropout = True
+    training_args.truncation_mode = "keep_end"
+    training_args.precompute_ref_log_probs = False
+    training_args.label_smoothing = 0
+    training_args.f_divergence_type = "alpha_divergence"
+    training_args.f_alpha_divergence_coef = 1.0
+    training_args.dataset_num_proc = 8
     trainer = DPOTrainer(
         model,
         ref_model,
